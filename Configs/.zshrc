@@ -1,89 +1,208 @@
-# Oh-my-zsh installation path
-ZSH=/usr/share/oh-my-zsh/
+# Start configuration added by Zim install {{{
+#
+# User configuration sourced by interactive shells
+#
 
-# Powerlevel10k theme path
-source /usr/share/zsh-theme-powerlevel10k/powerlevel10k.zsh-theme
+# -----------------
+# Zsh configuration
+# -----------------
 
-# List of plugins used
-plugins=()
-source $ZSH/oh-my-zsh.sh
+#
+# History
+#
 
-# In case a command is not found, try to find the package that has it
-function command_not_found_handler {
-    local purple='\e[1;35m' bright='\e[0;1m' green='\e[1;32m' reset='\e[0m'
-    printf 'zsh: command not found: %s\n' "$1"
-    local entries=( ${(f)"$(/usr/bin/pacman -F --machinereadable -- "/usr/bin/$1")"} )
-    if (( ${#entries[@]} )) ; then
-        printf "${bright}$1${reset} may be found in the following packages:\n"
-        local pkg
-        for entry in "${entries[@]}" ; do
-            local fields=( ${(0)entry} )
-            if [[ "$pkg" != "${fields[2]}" ]]; then
-                printf "${purple}%s/${bright}%s ${green}%s${reset}\n" "${fields[1]}" "${fields[2]}" "${fields[3]}"
-            fi
-            printf '    /%s\n' "${fields[4]}"
-            pkg="${fields[2]}"
-        done
-    fi
-    return 127
-}
+# Remove older command from the history if a duplicate is to be added.
+setopt HIST_IGNORE_ALL_DUPS
 
-# Detect AUR wrapper
-if pacman -Qi yay &>/dev/null; then
-   aurhelper="yay"
-elif pacman -Qi paru &>/dev/null; then
-   aurhelper="paru"
+#
+# Input/output
+#
+
+# Set editor default keymap to emacs (`-e`) or vi (`-v`)
+bindkey -e
+
+# Prompt for spelling correction of commands.
+setopt CORRECT
+
+# Customize spelling correction prompt.
+#SPROMPT='zsh: correct %F{red}%R%f to %F{green}%r%f [nyae]? '
+
+# Remove path separator from WORDCHARS.
+WORDCHARS=${WORDCHARS//[\/]}
+
+# -----------------
+# Zim configuration
+# -----------------
+
+# Use degit instead of git as the default tool to install and update modules.
+#zstyle ':zim:zmodule' use 'degit'
+
+# --------------------
+# Module configuration
+# --------------------
+
+#
+# git
+#
+
+# Set a custom prefix for the generated aliases. The default prefix is 'G'.
+#zstyle ':zim:git' aliases-prefix 'g'
+
+#
+# input
+#
+
+# Append `../` to your input for each `.` you type after an initial `..`
+#zstyle ':zim:input' double-dot-expand yes
+
+#
+# termtitle
+#
+
+# Set a custom terminal title format using prompt expansion escape sequences.
+# See http://zsh.sourceforge.net/Doc/Release/Prompt-Expansion.html#Simple-Prompt-Escapes
+# If none is provided, the default '%n@%m: %~' is used.
+#zstyle ':zim:termtitle' format '%1~'
+
+#
+# zsh-autosuggestions
+#
+
+# Disable automatic widget re-binding on each precmd. This can be set when
+# zsh-users/zsh-autosuggestions is the last module in your ~/.zimrc.
+ZSH_AUTOSUGGEST_MANUAL_REBIND=1
+
+# Customize the style that the suggestions are shown with.
+# See https://github.com/zsh-users/zsh-autosuggestions/blob/master/README.md#suggestion-highlight-style
+#ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=242'
+
+#
+# zsh-syntax-highlighting
+#
+
+# Set what highlighters will be used.
+# See https://github.com/zsh-users/zsh-syntax-highlighting/blob/master/docs/highlighters.md
+ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets)
+
+# Customize the main highlighter styles.
+# See https://github.com/zsh-users/zsh-syntax-highlighting/blob/master/docs/highlighters/main.md#how-to-tweak-it
+#typeset -A ZSH_HIGHLIGHT_STYLES
+#ZSH_HIGHLIGHT_STYLES[comment]='fg=242'
+
+# ------------------
+# Initialize modules
+# ------------------
+
+ZIM_HOME=${ZDOTDIR:-${HOME}}/.zim
+# Download zimfw plugin manager if missing.
+if [[ ! -e ${ZIM_HOME}/zimfw.zsh ]]; then
+  if (( ${+commands[curl]} )); then
+    curl -fsSL --create-dirs -o ${ZIM_HOME}/zimfw.zsh \
+        https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh
+  else
+    mkdir -p ${ZIM_HOME} && wget -nv -O ${ZIM_HOME}/zimfw.zsh \
+        https://github.com/zimfw/zimfw/releases/latest/download/zimfw.zsh
+  fi
 fi
+# Install missing modules, and update ${ZIM_HOME}/init.zsh if missing or outdated.
+if [[ ! ${ZIM_HOME}/init.zsh -nt ${ZDOTDIR:-${HOME}}/.zimrc ]]; then
+  source ${ZIM_HOME}/zimfw.zsh init -q
+fi
+# Initialize modules.
+source ${ZIM_HOME}/init.zsh
 
-function in {
-    local -a inPkg=("$@")
-    local -a arch=()
-    local -a aur=()
+# ------------------------------
+# Post-init module configuration
+# ------------------------------
 
-    for pkg in "${inPkg[@]}"; do
-        if pacman -Si "${pkg}" &>/dev/null; then
-            arch+=("${pkg}")
-        else
-            aur+=("${pkg}")
-        fi
-    done
+#
+# zsh-history-substring-search
+#
 
-    if [[ ${#arch[@]} -gt 0 ]]; then
-        sudo pacman -S "${arch[@]}"
-    fi
+zmodload -F zsh/terminfo +p:terminfo
+# Bind ^[[A/^[[B manually so up/down works both before and after zle-line-init
+for key ('^[[A' '^P' ${terminfo[kcuu1]}) bindkey ${key} history-substring-search-up
+for key ('^[[B' '^N' ${terminfo[kcud1]}) bindkey ${key} history-substring-search-down
+for key ('k') bindkey -M vicmd ${key} history-substring-search-up
+for key ('j') bindkey -M vicmd ${key} history-substring-search-down
+unset key
+# }}} End configuration added by Zim install
 
-    if [[ ${#aur[@]} -gt 0 ]]; then
-        ${aurhelper} -S "${aur[@]}"
-    fi
-}
+export EDITOR="nvim"
+export CC=/usr/bin/clang
+export LOCAL_CFLAGS="-fsanitize=integer -fsanitize=undefined -ferror-limit=1 -gdwarf-4 -ggdb3 -O0 -std=c11 -Wall -Werror -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wshadow"
+export LOCAL_LDLIBS="-lcrypt -lcs50 -lm"
+export CXX=/usr/bin/clang++
+export LOCAL_CXXFLAGS="-fsanitize=integer -fsanitize=undefined -ferror-limit=1 -gdwarf-4 -ggdb3 -O0 -Wall -Werror -Wextra -Wno-gnu-folding-constant -Wno-sign-compare -Wno-unused-parameter -Wno-unused-variable -Wshadow"
+export RANGER_LOAD_DEFAULT_RC=false # To load custom ranger config
 
-# Helpful aliases
-alias c='clear' # clear terminal
-alias l='eza -lh --icons=auto' # long list
-alias ls='eza -1 --icons=auto' # short list
-alias ll='eza -lha --icons=auto --sort=name --group-directories-first' # long list all
-alias ld='eza -lhD --icons=auto' # long list dirs
-alias lt='eza --icons=auto --tree' # list folder as tree
-alias un='$aurhelper -Rns' # uninstall package
-alias up='$aurhelper -Syu' # update system/package/aur
-alias pl='$aurhelper -Qs' # list installed package
-alias pa='$aurhelper -Ss' # list available package
-alias pc='$aurhelper -Sc' # remove unused cache
-alias po='$aurhelper -Qtdq | $aurhelper -Rns -' # remove unused packages, also try > $aurhelper -Qqd | $aurhelper -Rsu --print -
-alias vc='code' # gui code editor
+alias make="CFLAGS=\"$LOCAL_CFLAGS\" LDLIBS=\"$LOCAL_LDLIBS\" CXXFLAGS=\"$LOCAL_CXXFLAGS\" \make"
+alias diff=colordiff
+alias c=clear
+alias C=clear
+# alias act_conda='bash --rcfile ~/.conda.bashrc'
+alias ccr='sudo sh -c "echo 3 > /proc/sys/vm/drop_caches"'
+alias revtet=gnirehtet
+alias rnew='cd .. && read name && cargo init $name && cd $name && code . && code src/main.rs'
+alias update='sudo sh -c "cowsay pacman; pacman -Syu; cowsay flatpak; flatpak update;"; cowsay yay; yay -Syu; cowsay rust; rustup update; cowsay zim; zimfw update; zimfw upgrade; cowsay "TGPT"; sudo tgpt -u; cowsay auto-cpufreq; sudo auto-cpufreq --update; cowsay rye; rye self update;'
+alias ficd='source ~/Scripts/findAndcdIntoDir.sh'
+alias whatsapp="firefox -P Whatsapp web.whatsapp.com"
+alias cat="bat --theme=OneHalfDark"
+alias ls="exa --icons --hyperlink --binary --git --git-repos"
+alias magic='cd "/run/media/$(whoami)/Media/Explorer/Coding/"'
+alias deleteELF="fd -tf -X file | grep '\bELF\b' | cut -d: -f1 | xargs rm -i"
+alias maintain="flatpak uninstall --unused && sudo flatpak repair && sudo pacman -Scc && yay -Scc && paru -Scc && sudo journalctl --vacuum-size=50M && kondo --older 10d -d ~/Documents/Coding && cargo cache -a && sudo sh -c 'echo 3 > /proc/sys/vm/drop_caches' && nix-collect-garbage && podman system prune --all --volumes"
+alias docker="echo Using Podman; podman"
+alias search="fzf --preview 'bat --color=always --style=numbers --line-range=:500 {}'"
+alias brg="batgrep"
+export GPG_TTY=\$(tty)
 
-# Directory navigation shortcuts
-alias ..='cd ..'
-alias ...='cd ../..'
-alias .3='cd ../../..'
-alias .4='cd ../../../..'
-alias .5='cd ../../../../..'
+eval "$(zoxide init zsh)"
+eval "$(cargo shuttle generate shell zsh)"
+source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 
-# Always mkdir a path (this doesn't inhibit functionality to make a single dir)
-alias mkdir='mkdir -p'
+# bun completions
+[ -s "/home/$(whoami)/.bun/_bun" ] && source "/home/$(whoami)/.bun/_bun"
+source "$HOME/.rye/env"
 
-# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh
-[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Display Pokemon
+# bun
+export BUN_INSTALL="$HOME/.bun"
+export PATH="/home/$(whoami)/.avm/bin:$BUN_INSTALL/bin:$HOME/go/bin:/usr/bin:$PATH:$HOME/.cargo/bin:$HOME/.local/bin:$HOME/.local/share/gem/ruby/3.0.0/bin"
+
+# To enable nvm, uncomment this
+# export NVM_DIR="$HOME/.nvm"
+# [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+# [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+eval "$(_AUTO_CPUFREQ_COMPLETE=zsh_source auto-cpufreq)"
+
+# pnpm
+export PNPM_HOME="/home/$(whoami)/.local/share/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
+
+# android
+export ANDROID_SDK=$HOME/Android/Sdk
+export ANDROID_HOME=$HOME/Android/Sdk
+export NDK_HOME='/home/violow/Android/Sdk/ndk/27.0.12077973/'
+export PATH=$ANDROID_SDK/emulator:$ANDROID_SDK/tools:$PATH
+
+eval `ssh-agent` >| /dev/null 2>&1 
+
+########################################
+## Beauty prompt at start
+#######################################
+figlet -ct "rootCircle" | lolcat
+fortune -s | cowsay -W $(($(tput cols) / 3)) | lolcat
 pokemon-colorscripts --no-title -r 1,3,6
+# ponsay
+eval "$(starship init zsh)"
+
+# echo "Enter Password for GitHub SSH"
+# ssh-add
+
+eval $(thefuck --alias)

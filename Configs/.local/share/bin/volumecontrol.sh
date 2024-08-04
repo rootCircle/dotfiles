@@ -70,7 +70,7 @@ change_volume() {
     case $device in
         "pamixer")            
             $use_swayosd && swayosd-client ${mode} "${delta}${step}"  && exit 0
-            pamixer $srce -"$action" "$step"
+            pamixer --allow-boost $srce -"$action" "$step"
             vol=$(pamixer $srce --get-volume)
             ;;
         "playerctl")
