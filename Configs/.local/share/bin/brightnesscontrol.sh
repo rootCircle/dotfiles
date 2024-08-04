@@ -37,9 +37,9 @@ i)  # increase the backlight
     fi
     send_notification ;;
 d)  # decrease the backlight
-    if [[ $(get_brightness) -le 1 ]] ; then
+    if [[ $(get_brightness) -le 0 ]] ; then
         # avoid 0% brightness
-        brightnessctl set 1%
+        brightnessctl set 0:%
     elif [[ $(get_brightness) -le 10 ]] ; then
         # decrease the backlight by 1% if less than 10%
         brightnessctl set 1%-

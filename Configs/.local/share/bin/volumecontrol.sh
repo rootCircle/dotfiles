@@ -38,7 +38,7 @@ notify_mute() {
 }
 
 action_pamixer() {
-    pamixer "${srce}" -"${1}" "${step}"
+    pamixer --allow-boost "${srce}" -"${1}" "${step}"
     vol=$(pamixer "${srce}" --get-volume | cat)
 }
 
