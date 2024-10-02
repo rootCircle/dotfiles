@@ -12,7 +12,8 @@
 		],
 		"app_ids-mapping": {
 			"firefoxdeveloperedition": "firefox-developer-edition",
-      "jetbrains-datagrip": "DataGrip"
+      "jetbrains-datagrip": "DataGrip",
+      "Firefox Beta": "firefox-beta" 
 		}
 	},
 

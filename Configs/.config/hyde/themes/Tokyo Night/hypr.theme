@@ -1,3 +1,4 @@
+$HOME/.config/hypr/themes/theme.conf|> $HOME/.config/hypr/themes/colors.conf
 exec = gsettings set org.gnome.desktop.interface icon-theme 'Tela-circle-purple'
 exec = gsettings set org.gnome.desktop.interface gtk-theme 'Tokyo-Night'
 exec = gsettings set org.gnome.desktop.interface color-scheme 'prefer-dark'
@@ -21,6 +22,7 @@ group {
 
 decoration {
     rounding = 10
+    drop_shadow = false
 
     blur {
         enabled = yes
@@ -29,10 +31,6 @@ decoration {
         new_optimizations = on
         ignore_opacity = on
         xray = false
-    }
-
-    shadow {
-        enabled = false
     }
 }
 
