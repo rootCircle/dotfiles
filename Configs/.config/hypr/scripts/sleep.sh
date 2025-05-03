@@ -1,5 +1,5 @@
-swayidle -w timeout 500 'swaylock -f' \
-  timeout 1500 'playerctl pause -a; systemctl suspend' resume 'hyprctl dispatch dpms on' \
+swayidle -w timeout 300 'swaylock -f' \
+  timeout 900 'playerctl pause -a; systemctl suspend' resume 'hyprctl dispatch dpms on' \
   before-sleep 'playerctl pause -a; swaylock -f' \
   after-resume 'hyprctl dispatch dpms on' \
   lock 'swaylock -f' &

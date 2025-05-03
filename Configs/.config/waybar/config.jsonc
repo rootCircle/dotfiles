@@ -90,7 +90,8 @@
 		],
 		"app_ids-mapping": {
 			"firefoxdeveloperedition": "firefox-developer-edition",
-      "Firefox Beta": "firefox-beta" 
+      "Firefox Beta": "firefox-beta",
+      "jetbrains-studio": "android-studio"
 		}
 	},
 
